@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>櫻坂46 × 楽曲診断</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+:root {
+  --bg: #0e0a10;
+  --surface: #160f1a;
+  --surface2: #1e1525;
+  --border: #2e1f35;
+  --text: #f5eef0;
+  --muted: #8a7080;
+  --pink: #ffb7c5;
+  --pink-soft: #ffd6df;
+  --pink-deep: #e8849a;
+  --lavender: #d4b8e0;
+  --white: #fff8fa;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Serif JP', serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(255,183,197,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 80% 80%, rgba(212,184,224,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 60% 40%, rgba(232,132,154,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap { max-width: 680px; width: 100%; position: relative; z-index: 1; }
+
+.petals { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.petal {
+  position: absolute;
+  width: var(--sz);
+  height: var(--sz);
+  background: var(--col);
+  border-radius: 50% 0 50% 0;
+  opacity: 0;
+  animation: fall var(--dur) var(--delay) infinite ease-in;
+  transform: rotate(var(--rot));
+}
+@keyframes fall {
+  0%   { opacity: 0; transform: translateY(-20px) rotate(var(--rot)) scale(0.8); }
+  10%  { opacity: var(--op); }
+  90%  { opacity: var(--op); }
+  100% { opacity: 0; transform: translateY(100vh) rotate(calc(var(--rot) + 180deg)) scale(0.6) translateX(var(--drift)); }
+}
+
+.header { text-align: center; margin-bottom: 40px; animation: fadeDown 0.8s ease both; }
+.eyebrow {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--pink);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: 0.9;
+}
+.header h1 {
+  font-size: clamp(17px, 3.5vw, 26px);
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: var(--white);
+}
+.header h1 em {
+  font-style: normal;
+  color: var(--pink-soft);
+  font-weight: 400;
+}
+.header p {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+}
+
+.progress-wrap { margin-bottom: 32px; }
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.progress-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.progress-frac {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--pink);
+  letter-spacing: 0.1em;
+}
+.progress-bar {
+  height: 1px;
+  background: var(--border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink-deep), var(--pink-soft));
+  border-radius: 1px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 0 6px rgba(255,183,197,0.4);
+}
+
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px;
+  animation: fadeUp 0.5s ease both;
+  position: relative;
+  overflow: hidden;
+}
+.q-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,183,197,0.4), transparent);
+}
+.q-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--pink);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  opacity: 0.8;
+}
+.q-text {
+  font-size: clamp(14px, 2.5vw, 17px);
+  font-weight: 300;
+  line-height: 1.9;
+  color: var(--white);
+  margin-bottom: 36px;
+  letter-spacing: 0.04em;
+}
+
+.scale-wrap { display: flex; flex-direction: column; gap: 10px; }
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.scale-label-text {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  font-family: 'Cormorant Garamond', serif;
+}
+.scale-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.scale-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-family: 'Cormorant Garamond', serif;
+}
+.scale-btn:hover {
+  border-color: var(--pink);
+  background: rgba(255,183,197,0.05);
+  color: var(--pink-soft);
+}
+.scale-btn:hover .scale-dot { background: var(--pink); box-shadow: 0 0 8px rgba(255,183,197,0.5); }
+.scale-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.2s ease;
+}
+.scale-num {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.result-card {
+  background: var(--surface);
+  border: 1px solid rgba(255,183,197,0.15);
+  border-radius: 16px;
+  padding: 48px 36px;
+  animation: fadeUp 0.6s ease both;
+  position: relative;
+  overflow: hidden;
+  display: none;
+}
+.result-card.show { display: block; }
+.result-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pink), var(--lavender), var(--pink), transparent);
+  box-shadow: 0 0 8px rgba(255,183,197,0.3);
+}
+
+.res-eyebrow {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: var(--pink);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.type-name {
+  text-align: center;
+  margin-bottom: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(22px, 5vw, 34px);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--pink-soft);
+  font-style: italic;
+  text-shadow: 0 0 24px rgba(255,183,197,0.3);
+}
+.type-copy {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+  margin-bottom: 28px;
+  padding: 0 8px;
+}
+
+.type-desc {
+  margin-bottom: 28px;
+  padding: 20px 22px;
+  border-left: 1px solid rgba(255,183,197,0.3);
+  background: rgba(255,183,197,0.03);
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  line-height: 2;
+  color: #c8b8c0;
+  letter-spacing: 0.03em;
+}
+
+.song-section {
+  background: var(--surface2);
+  border: 1px solid rgba(255,183,197,0.12);
+  border-radius: 12px;
+  padding: 24px 22px;
+  margin-bottom: 20px;
+}
+.song-top {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.song-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: rgba(255,183,197,0.08);
+  border: 1px solid rgba(255,183,197,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(255,183,197,0.08);
+}
+.song-info { flex: 1; }
+.song-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--pink);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+.song-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--white);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.song-artist {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+.song-reason-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--lavender);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+.song-reason {
+  font-size: 12px;
+  line-height: 2;
+  color: #b0a0b8;
+  letter-spacing: 0.03em;
+}
+
+.action-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.action-btn {
+  border-radius: 9px;
+  padding: 13px 14px;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  letter-spacing: 0.05em;
+}
+.action-btn-song {
+  background: rgba(255,183,197,0.06);
+  border: 1px solid rgba(255,183,197,0.25);
+  color: var(--pink-soft);
+}
+.action-btn-song:hover {
+  background: rgba(255,183,197,0.12);
+  box-shadow: 0 0 14px rgba(255,183,197,0.12);
+  transform: translateY(-2px);
+}
+.action-btn-share {
+  background: rgba(212,184,224,0.06);
+  border: 1px solid rgba(212,184,224,0.25);
+  color: var(--lavender);
+}
+.action-btn-share:hover {
+  background: rgba(212,184,224,0.12);
+  box-shadow: 0 0 14px rgba(212,184,224,0.12);
+  transform: translateY(-2px);
+}
+
+.retry-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--muted);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+.retry-btn:hover { border-color: rgba(255,183,197,0.3); color: var(--pink); }
+
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp   { from { opacity: 0; transform: translateY(16px);  } to { opacity: 1; transform: translateY(0); } }
+.fade-out { animation: fadeOut 0.25s ease both; }
+@keyframes fadeOut  { to { opacity: 0; transform: translateY(-8px); } }
+</style>
+</head>
+<body>
+
+<div class="petals" id="petals"></div>
+
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">櫻坂46 × 楽曲診断</div>
+    <h1>あなたの好きなストーリーは<br><em>どの曲の世界観</em>に近い？</h1>
+    <p>7つの問いに答えて、あなたの感性に<br>もっとも近い櫻坂46の楽曲を見つけましょう。</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span class="progress-label">Question</span>
+      <span class="progress-frac" id="pfrac">1 / 7</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="pfill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="qarea"></div>
+  <div class="result-card" id="rcard"></div>
+</div>
+
+<script>
+const petalEl = document.getElementById('petals');
+const petalCols = ['rgba(255,183,197,VAR)','rgba(255,214,223,VAR)','rgba(232,132,154,VAR)','rgba(212,184,224,VAR)'];
+for(let i=0;i<30;i++){
+  const p=document.createElement('div'); p.className='petal';
+  const col=petalCols[Math.floor(Math.random()*petalCols.length)].replace('VAR',(0.3+Math.random()*0.4).toFixed(2));
+  const sz=(4+Math.random()*8).toFixed(1)+'px';
+  p.style.cssText=`left:${Math.random()*100}%;top:${-10+Math.random()*-30}px;--sz:${sz};--col:${col};--dur:${6+Math.random()*8}s;--delay:${Math.random()*10}s;--op:${0.4+Math.random()*0.4};--rot:${Math.random()*360}deg;--drift:${-40+Math.random()*80}px`;
+  petalEl.appendChild(p);
+}
+
+const Qs = [
+  "物語の主人公として惹かれるのは、周囲や社会とぶつかる人よりも、自分の心の中で揺れ続ける人だ。",
+  "迷い続ける主人公よりも、たとえ不器用でも何かを決断して前に進む主人公に惹かれる。",
+  "「誰かに想いを伝えたい」「誰かとつながりたい」話よりも、「自分を変えたい・証明したい」話に惹かれる。",
+  "物語の終わり方は、余韻や切なさが残る結末よりも、少しでも前進や覚悟が感じられる結末のほうが好きだ。",
+  "主人公が苦しんでいる理由として、他人や社会の圧力よりも、自分自身の弱さや未熟さのほうが中心にある物語に惹かれる。",
+  "少し危うくても、きれいに整理されていない感情がそのまま噴き出している物語に惹かれる。",
+  "好きなのは、過去を振り返る物語よりも、「まだ見ぬ明日」へ向かう物語だ。"
+];
+
+const IDEAL = [
+  [5,1,1,1,4,2,1],
+  [4,5,5,5,5,3,5],
+  [4,4,2,4,4,3,4],
+  [2,2,2,2,2,4,2],
+  [1,2,4,2,2,4,2],
+  [5,4,4,5,5,2,4],
+  [5,3,2,4,5,3,5],
+  [4,2,4,2,5,5,2],
+];
+const WEIGHTS = [1.5,1.5,1.5,1.5,1.0,1.0,1.0];
+const PRIORITY = [1,0,6,5,7,4,3,2];
+
+const TYPES = [
+  {
+    song:"桜月", type:"恋の逡巡・切なさ型",
+    copy:"言えない想いの熱を、静かに抱え続ける物語に惹かれる人。",
+    desc:"あなたは、社会との衝突やわかりやすい劇的展開よりも、主人公の心の中で揺れ続ける感情が丁寧に描かれる物語に惹かれやすいタイプです。勢いで突き進む人物より、ためらいや遠慮を抱えたまま立ち止まってしまう人物に共感しやすく、結末にも明快な勝利より、切なさや余韻が残る終わり方を好む傾向があります。",
+    reason:"この曲は、好きという気持ちを抱えながらも、それをそのまま押し通すのではなく、相手を思うからこそ引いてしまうような感情を描いています。恋心の強さそのものより、想いを抱えたまま見送る切なさに価値があるこの曲と相性が良いです。"
+  },
+  {
+    song:"Start over!", type:"自分を立て直す突破型",
+    copy:"うまくいかなかった後でも、もう一度立ち上がる物語に惹かれる人。",
+    desc:"あなたは、迷いや停滞を描くだけで終わる物語よりも、そこからもう一度前へ進もうとする意志が見える物語に惹かれやすいタイプです。自分を変えたい、自分を立て直したいという欲求が軸にある物語を好む傾向があり、結末にも切ない余韻より、再出発や覚悟のような感情を求めやすいタイプです。",
+    reason:"この曲は、過去の失敗や停滞に飲まれたままでいるのではなく、「ここからやり直す」と自分を奮い立たせる物語です。傷を抱えたままでも再び立ち上がろうとする主人公に惹かれやすいあなたには、再起の熱と自分をもう一度信じ直そうとする意志を持つこの曲がもっとも近いです。"
+  },
+  {
+    song:"自業自得", type:"関係の中で前に進む型",
+    copy:"痛みごと引き受けて、それでも前へ進む物語に惹かれる人。",
+    desc:"あなたは、関係の中で揺れながらも自分の選択を引き受けていく物語に惹かれやすいタイプです。恋愛や人間関係の感情には強く反応しますが、ただ切ないだけではなく、その経験の責任や重さを自分で抱えて進んでいく主人公を好む傾向があります。",
+    reason:"この曲は、誰かを責めるのではなく、自分の選択や恋の結果を自分で引き受ける姿勢を描いています。感情に流されるだけの物語よりも、傷ついてもなお「それでも自分で選んだ」と受け止める主人公に惹かれるあなたと深く噛み合います。"
+  },
+  {
+    song:"承認欲求", type:"現代的不安・息苦しさ型",
+    copy:"誰かに見てほしいのに、見られることにも疲れてしまう物語に惹かれる人。",
+    desc:"あなたは、現代を生きる中での不安や自意識の揺れが主題になっている物語に惹かれやすいタイプです。主人公が社会や他人の視線にさらされながら、自分の価値や居場所を探しているような話に共感しやすく、感情もきれいに整理されたものより、少し不安定でざらついたものに反応しやすい傾向があります。",
+    reason:"この曲は、誰かに認められたいという気持ちと、その欲望に振り回される苦しさを同時に描いています。単純な強さや爽快感よりも、今の時代に特有の不安定さや息苦しさが剥き出しになった物語に惹かれるあなたの感性にもっとも近いです。"
+  },
+  {
+    song:"UDAGAWA GENERATION", type:"夜と逸脱の自由型",
+    copy:"正しさよりも、はみ出す熱と今この瞬間の自由に惹かれる人。",
+    desc:"あなたは、社会や規範の外側に立ちながら、自分の熱や衝動を優先する人物に惹かれやすいタイプです。きれいに整った感情より、少し危うくても生っぽい勢いがある物語を好む傾向があり、安心や安定より、夜の街や集団の熱気、逸脱感に魅力を感じやすいタイプです。",
+    reason:"この曲は、街の熱や若さの衝動の中で、自分たちなりの自由を選び取ろうとする感覚を描いています。安定した正解に向かう物語より、少し危うくても生きている実感がある物語に惹かれるあなたの好みと強く重なります。"
+  },
+  {
+    song:"何歳の頃に戻りたいのか？", type:"過去から未来への移行型",
+    copy:"戻りたい気持ちを抱えながら、それでも未来へ進む物語に惹かれる人。",
+    desc:"あなたは、過去への未練や懐かしさをきちんと抱えたうえで、それでも先へ進んでいく物語に惹かれやすいタイプです。主人公の内面の揺れには強く共感しますが、最終的には停滞ではなく、前向きな移行や受容がある展開を好む傾向があります。",
+    reason:"この曲は、過去のほうがよかったのではないかという気持ちに触れながらも、今とこれからを引き受けていこうとする物語です。過去への視線と未来への意志が両方ある物語に惹かれるあなたと、とても相性が良いです。"
+  },
+  {
+    song:"I want tomorrow to come", type:"不安を抱えた希望型",
+    copy:"弱さが消えなくても、明日を願おうとする物語に惹かれる人。",
+    desc:"あなたは、不安や孤独を抱えたまま、それでも前を向こうとする主人公に惹かれやすいタイプです。心の揺れや弱さには強く共感しますが、結末には完全な絶望ではなく、少しでも希望や明日への意志が残っていてほしいと感じる傾向があります。",
+    reason:"この曲は、不安や暗さをなかったことにせず、それでも明日が来てほしいと願う感情を描いています。何もかも吹っ切れた強さより、揺れたまま希望を持とうとする姿に惹かれるあなたの感性と深く重なります。"
+  },
+  {
+    song:"BAN", type:"未熟さと反発の揺れ型",
+    copy:"だめな自分を抱えたまま、反発も甘えも捨てきれない物語に惹かれる人。",
+    desc:"あなたは、未熟さやだらしなさ、反発心を抱えたまま揺れている主人公に惹かれやすいタイプです。きれいに整理された成長物語より、感情が少し雑で、人間くさくて、どこか危うい物語に魅力を感じやすい傾向があります。",
+    reason:"この曲は、ちゃんとしていない自分、変わりきれない自分を抱えながら、それでもどこかで反発し、簡単には終わりたくないと足掻く感情を描いています。未熟さや矛盾を抱えたまま揺れている主人公に惹かれるあなたとの相性が良いです。"
+  }
+];
+
+let ans = [], cur = 0;
+
+function renderQ(i) {
+  document.getElementById('pfill').style.width = (i/7*100)+'%';
+  document.getElementById('pfrac').textContent = `${i+1} / 7`;
+  document.getElementById('qarea').innerHTML = `
+    <div class="q-card" id="qcard">
+      <div class="q-num">Question 0${i+1}</div>
+      <div class="q-text">${Qs[i]}</div>
+      <div class="scale-wrap">
+        <div class="scale-labels">
+          <span class="scale-label-text">まったく惹かれない</span>
+          <span class="scale-label-text">とても惹かれる</span>
+        </div>
+        <div class="scale-btns">
+          ${[1,2,3,4,5].map(n=>`
+            <button class="scale-btn" onclick="pick(${n})">
+              <div class="scale-dot"></div>
+              <span class="scale-num">${n}</span>
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function pick(v) {
+  ans.push(v);
+  document.getElementById('qcard').classList.add('fade-out');
+  setTimeout(()=>{ cur++; cur<7 ? renderQ(cur) : showResult(); }, 250);
+}
+
+function calcScores() {
+  return IDEAL.map(ideal =>
+    ideal.reduce((sum, iv, qi) => sum + (5 - Math.abs(ans[qi] - iv)) * WEIGHTS[qi], 0)
+  );
+}
+
+function showResult() {
+  document.getElementById('pfill').style.width = '100%';
+  document.getElementById('pfrac').textContent = '7 / 7';
+  document.getElementById('qarea').innerHTML = '';
+
+  const scores = calcScores();
+  const maxScore = Math.max(...scores);
+  const ties = scores.map((s,i)=>s===maxScore?i:-1).filter(i=>i>=0);
+  const winner = ties.length===1 ? ties[0] : PRIORITY.find(p=>ties.includes(p));
+  const r = TYPES[winner];
+
+  const rc = document.getElementById('rcard');
+  rc.innerHTML = `
+    <div class="res-eyebrow">あなたの診断結果</div>
+    <div class="type-name">${r.type}</div>
+    <div class="type-copy">${r.copy}</div>
+    <div class="type-desc">${r.desc}</div>
+    <div class="song-section">
+      <div class="song-top">
+        <div class="song-icon">🌸</div>
+        <div class="song-info">
+          <div class="song-label">あなたに合う楽曲</div>
+          <div class="song-title">${r.song}</div>
+          <div class="song-artist">櫻坂46</div>
+        </div>
+      </div>
+      <div class="song-reason-label">この曲が合う理由</div>
+      <div class="song-reason">${r.reason}</div>
+    </div>
+    <div class="action-btns">
+      <button class="action-btn action-btn-song" onclick="void(0)">🎵 この楽曲を聴く</button>
+      <button class="action-btn action-btn-share" onclick="void(0)">🌸 結果をシェアする</button>
+    </div>
+    <button class="retry-btn" onclick="retry()">もう一度診断する</button>`;
+  rc.classList.add('show');
+}
+
+function retry() {
+  ans=[]; cur=0;
+  const rc=document.getElementById('rcard');
+  rc.classList.remove('show'); rc.innerHTML='';
+  renderQ(0);
+}
+
+renderQ(0);
+</script>
+</body>
+</html>
